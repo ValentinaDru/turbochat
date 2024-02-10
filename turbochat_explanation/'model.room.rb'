@@ -1,0 +1,42 @@
+class Room < ApplicationRecord
+  validates_uniqueness_of :name
+
+  scope :public_rooms, -> {where(is_private: false)}
+  after_create_commit { broadcast_if_public }
+  has_many :messages 
+  has_many :participants, dependent: :destroy
+
+  def broadcast_if_public
+    broadcast_append_to "rooms" unless self.is_private
+  end
+
+  def self.create_private_room(users, room_name)
+    single_room = Room.create(name: room_name, is_private: true)
+    users.each do |user|
+      Participant.create(user_id: user.id, room_id: single_room.id)
+    end
+    single_room
+  end
+end
+
+validates_uniqueness_of :name: Эта строка указывает, что значение атрибута name 
+должно быть уникальным в пределах таблицы базы данных. То есть, нельзя создать две 
+комнаты с одинаковым именем.
+
+scope :public_rooms, -> { where(is_private: false) }: Этот блок определяет область видимости (scope) public_rooms, 
+который возвращает все комнаты, у которых значение атрибута is_private равно false. 
+Таким образом, этот scope используется для выборки только публичных комнат.
+
+after_create_commit { broadcast_if_public }: Это обратный вызов (callback), 
+который запускается после создания новой комнаты. В этом случае, если комната публичная 
+(is_private == false), то вызывается метод broadcast_append_to, чтобы сообщить клиентскую сторону 
+о добавлении новой комнаты. Это обновление в реальном времени обеспечивает более динамический пользовательский интерфейс.
+
+has_many :messages и has_many :participants, dependent: :destroy: Эти строки определяют ассоциации между моделью Room и моделями Message и Participant. 
+Каждая комната может иметь много сообщений и много участников чата. При удалении комнаты, связанные с ней сообщения и участники также будут удалены.
+
+def broadcast_if_public: Это метод экземпляра класса, который проверяет, является ли комната публичной (is_private == false). 
+Если комната публичная, то вызывается метод broadcast_append_to, чтобы сообщить клиентскую сторону о добавлении новой комнаты.
+
+def self.create_private_room: Это метод класса, который создает приватную комнату (is_private: true) 
+с заданным именем и добавляет пользователей в качестве участников этой комнаты.

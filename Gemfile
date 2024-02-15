@@ -73,3 +73,5 @@ group :development, :test do
 end
 
 gem 'rails-controller-testing'
+
+gem 'pry', '~> 0.14.2'

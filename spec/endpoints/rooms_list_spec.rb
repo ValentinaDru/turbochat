@@ -17,9 +17,14 @@ describe RoomsController, type: :controller do
       sign_in @user
     end
 
-    it 'render to rooms list' do
+    it 'renders rooms list' do
       get :index
       expect(response).to render_template(:index)
     end
+
+    it 'assigns all users except current user to @users' do
+      get :index
+      expect(assigns(:users)).to match_array(User.all_except(@user))
+    end
   end
-end
+end 
